@@ -130,7 +130,12 @@ class Sqhs_Admin {
 
 
     public function admin_index() {
-        require_once plugin_dir_path(__FILE__) . 'partials/sqhs-admin-display.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-sets.php';
+        $sqhs_sets = new Sets_List($_REQUEST);
+
+	    if ( !isset($_REQUEST['action']) || !isset($_REQUEST['set']) )
+            require_once plugin_dir_path(__FILE__) . 'partials/sqhs-sets-display.php';
+
     }
 
 
@@ -140,11 +145,23 @@ class Sqhs_Admin {
 
 
     public function admin_question_categories() {
-
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-category.php';
         $sqhs_categories = new Categories_List($_REQUEST);
 
         require_once plugin_dir_path(__FILE__) . 'partials/sqhs-cat-display.php';
+	}
+	
+
+	// Set the column width for Set list table
+	function admin_header() {
+        $page = ( isset($_REQUEST['page'] ) ) ? esc_attr( $_REQUEST['page'] ) : false;
+        if ( 'sqhs_admin_menu' != $page ) return;
+        
+        echo '<style type="text/css">';
+        echo '.wp-list-table .column-id { width: 5%; }';
+        echo '.wp-list-table .column-name { width: 40%; }';
+        echo '.wp-list-table .column-description { width: 55%; }';
+        echo '</style>';
     }
 
 }

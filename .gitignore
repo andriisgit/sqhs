@@ -1,0 +1,8 @@
+.idea/
+.VSCode/
+.history/
+.git/
+.DS_Store
+*.clpprj
+*.csprj
+*.bak

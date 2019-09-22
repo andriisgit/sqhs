@@ -203,4 +203,17 @@ class Categories_List extends \WP_List_Table
             }
         }
     }
+
+    /**
+     * @param int $id Id of questions set
+     * @return mixed $categories
+     */
+    function get_categories($id = null) {
+        if ( !empty($id) )
+            $params['id'] = $id;
+        else
+            $params = null;
+        $this->get_data($params);
+        return $this->categories;
+    }
 }
