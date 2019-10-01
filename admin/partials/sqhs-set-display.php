@@ -1,17 +1,15 @@
 <?php
-
 /**
  * Provide a admin area view for the plugin
  *
- * This file is used to markup the admin-facing aspects of the plugin.
- *
- * @link       biir.dk
  * @since      1.0.0
  *
  * @package    Sqhs
  * @subpackage Sqhs/admin/partials
  */
 ?>
+<div id="sqhs_notice" class="notice is-dismissible" style="display: none;"><p id="sqhs_notice_msg"></p></div>
+
 <div class="wrap">
     <h1 class="wp-heading-inline"><?php echo isset($set['heading']) ? $set['heading'] : 'Add Questions Set' ; ?></h1>
     <hr class="wp-header-end">
@@ -19,7 +17,10 @@
 
     <div id="col-container" class="wp-clearfix">
 
-        <form method="post">
+        <form method="post" name="set-save">
+
+        <input type="hidden" name="set-id" value="<?php echo isset($set['id']) ? $set['id'] : ''; ?>">
+        <input type="hidden" name="action" value="sqhs_setsave">
 
         <div id="col-left">
             <div class="col-wrap">
@@ -34,14 +35,14 @@
                     <label for="set-description">Description</label>
                     <textarea name="set-description" id="set-description" rows="5" cols="40"><?php echo isset($set['description']) ? $set['description'] : ''; ?></textarea>
                 </div>
+                <label for="max_que_qua">Max question quantity in the Set:&nbsp;&nbsp;</label>
+                <input name="max_que_qua" type="number" step="1" min="0" id="max_que_qua" value="<?php echo isset($set['max_question_quantity']) ? $set['max_question_quantity'] : 5; ?>" class="small-text">
                 <div class="form-field term-description-wrap">
                    <p><input type="submit" name="submit" id="submit" class="button button-primary" value="Save Set"></p>
                </div>
 
             </div>
         </div>
-
-        <input type="hidden" name="set-id" value="<?php echo isset($set['id']) ? $set['id'] : ''; ?>">
 
         <div id="col-right">
             <div class="col-wrap">
@@ -53,7 +54,6 @@
                         <div class="inside">
                             <div id="taxonomy-category" class="categorydiv">
                                 <div id="category-all" class="tabs-panel">
-                                    <input type="hidden" name="post_category[]" value="0">
                                     <ul id="categorychecklist" data-wp-lists="list:category" class="categorychecklist form-no-clear">
                                         <?php echo $li; ?>
                                     </ul>

@@ -186,12 +186,10 @@ class Categories_List extends \WP_List_Table
             if (wp_verify_nonce($request['_wpnonce'], 'edit')) {
                 /** @ToDo Complete Category Edit */
                 echo 'Edit';
-                wp_die();
             }
             if (wp_verify_nonce($request['_wpnonce'], 'delete')) {
                 /** @ToDo Complete Category Delete */
                 echo 'Delete';
-                wp_die();
             }
             // action = 'add category'
             if ( isset($request['_wpnonce']) && $request['action'] == 'add-cat' && wp_verify_nonce($request['_wpnonce'], 'add-cat') ) {
@@ -204,16 +202,30 @@ class Categories_List extends \WP_List_Table
         }
     }
 
+
     /**
-     * @param int $id Id of questions set
-     * @return mixed $categories
+     * Builds and returns <li>-list of Categories
+     *
+     * @param array $relationships Array of category_id
+     * @return string
      */
-    function get_categories($id = null) {
-        if ( !empty($id) )
-            $params['id'] = $id;
-        else
-            $params = null;
-        $this->get_data($params);
-        return $this->categories;
+    function get_categories_list($relationships = null) {
+        $this->get_data();
+
+        $li = '';
+        if ( !empty($this->categories) ) {
+            foreach ($this->categories as $category) {
+
+                $checked = '';
+                if ( !is_null($relationships) )
+                    if ( in_array($category['id'], $relationships) )
+                        $checked = 'checked="checked"';
+
+                $li .= '<li title="' . $category['description'] . '"><label>';
+                $li .= '<input type="checkbox" name="set_category[]" value="' . $category['id'] . '" ' . $checked . '> ' . $category['name'] . '</label></li>';
+            }
+        }
+
+        return $li;
     }
 }

@@ -1,8 +1,9 @@
 .idea/
-.VSCode/
+.vscode/
 .history/
 .git/
 .DS_Store
 *.clpprj
 *.csprj
 *.bak
+wp-config.php

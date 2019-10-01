@@ -29,6 +29,7 @@ class Sets_List extends \WP_List_Table
         $columns = array(
             'id' => 'ID',
             'name' => 'Set name',
+            'max_question_quantity' => 'Max questions',
             'description' => 'Set description'
         );
         return $columns;
@@ -66,6 +67,7 @@ class Sets_List extends \WP_List_Table
         switch( $column_name ) {
             case 'id':
             case 'name':
+            case 'max_question_quantity':
             case 'description':
                 return $item[ $column_name ];
             default:
@@ -76,8 +78,9 @@ class Sets_List extends \WP_List_Table
 
     function get_sortable_columns() {
         $sortable_columns = array(
-            'id'  => array('name', false),
-            'name'  => array('name', true)
+            'id'  => [ 'id', false ],
+            'name'  => [ 'name', true ],
+            'max_question_quantity' => [ 'max_question_quantity', false ]
         );
         return $sortable_columns;
     }
@@ -136,48 +139,60 @@ class Sets_List extends \WP_List_Table
     private function check_action($request) {
         if ( isset($request['action']) || isset($request['set']) ) {
 
-            require_once plugin_dir_path(__FILE__) . 'class-sqhs-category.php';
+            require_once plugin_dir_path(__FILE__) . 'class-sqhs-categories.php';
             $catlist = new Categories_List($request);
 
             // Edit set by set_id
             if ( wp_verify_nonce($request['_wpnonce'], 'edit') ) {
-                $category = $catlist->get_categories( $request['set'] );
-                if ( empty($category) )
+                $param['id'] = $request['set'];
+
+                $relationships = $this->get_relations($request['set']);
+                $relationships = array_column($relationships, 'category_id');
+                $this->get_data( $param );
+                if ( empty($this->sets) )
                     wp_die( _e('No data found') );
-                $set = $category[0];
+
+                $li = $catlist->get_categories_list($relationships);
+                $set = $this->sets[0];
                 $set['heading'] = 'Edit Questions Set';
                 $set['subheading'] = 'Edit Set';
+
                 require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-set-display.php';
             }
 
+
             if ( wp_verify_nonce($request['_wpnonce'], 'delete') ) {
                 /** @ToDo Complete Set Delete */
-
                 echo 'Delete';
-                wp_die();
             }
 
             // Add new Set
             if ( wp_verify_nonce($request['_wpnonce'], 'addnewset') ) {
 
-                $categories = $catlist->get_categories();
+                $li = $catlist->get_categories_list();
 
-                $li = '';
-                if ( !empty($categories) ) {
-                    foreach ($categories as $id => $category) {
-                        $li .= '<li id="category-' . $id . '" title="' . $category['description'] . '"><label>';
-                        $li .= '<input type="checkbox" name="post_category[]" id="in-category-' . $id . '"> ' . $category['name'] . '</label></li>';
-                    }
-                }
                 require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-set-display.php';
 
             }
 
-            // Save the Set
-            if ( wp_verify_nonce($request['_wpnonce'], 'saveset') ) {
-
-            }
         }
 
     }
+
+
+    /**
+     * @param int $id Id of Set
+     * @return array of category_id for Set
+     */
+    function get_relations($id) {
+        global $wpdb;
+        if ( empty($id) )
+            return false;
+
+        $where = ' WHERE set_id=' . $id . ' AND category_id IS NOT NULL';
+        $sql = 'SELECT category_id FROM ' . $wpdb->prefix . 'sqhs_relationships ' . $where;
+
+        return $wpdb->get_results($sql, ARRAY_A);
+    }
+
 }
