@@ -12,9 +12,9 @@
  * @subpackage Sqhs/public/partials
  */
 ?>
-<h1>Welcome to the Quiz Set</h1>
+<h1>Quiz</h1>
 <form id="sqhs_start">
     <?php wp_nonce_field(); ?>
     <input type="hidden" name="action" value="sqhs_quiz_begin">
-    <button type="submit">Go</button>
+    <button type="submit">Continue</button>
 </form>

@@ -8,7 +8,10 @@
  * @subpackage Sqhs/admin/partials
  */
 ?>
-<div id="sqhs_notice" class="notice is-dismissible" style="display: none;"><p id="sqhs_notice_msg"></p></div>
+
+<div id="sqhs_notice" class="notice is-dismissible" <?php echo (isset($notice) && $notice) ? '' : 'style="display: none;"'; ?>>
+    <p id="sqhs_notice_msg"><?php echo (isset($notice) && $notice) ? $notice : ''; ?></p>
+</div>
 
 <div class="wrap">
     <h1 class="wp-heading-inline"><?php echo isset($question['heading']) ? $question['heading'] : 'Add Question' ; ?></h1>
@@ -28,8 +31,8 @@
                     <h2><?php echo isset($question['subheading']) ? $question['subheading'] : 'Add New Question'; ?></h2>
 
                     <div class="form-field term-description-wrap">
-                        <label for="question-description">Question</label>
-                        <textarea name="question-description" id="question-description" rows="5" cols="40"><?php echo isset($question['text']) ? $question['text'] : ''; ?></textarea>
+                        <label for="question-text">Question</label>
+                        <textarea name="question-text" required id="question-text" rows="5" cols="40"><?php echo isset($question['text']) ? $question['text'] : ''; ?></textarea>
                     </div><br/>
                     <div class="form-field term-description-wrap">
                         <label for="question-explanation">Question explanation </label>

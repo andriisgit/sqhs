@@ -172,6 +172,7 @@ class Sqhs {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
+
         $this->loader->add_action('wp_ajax_sqhs_quiz_begin', $plugin_public, 'quiz_begin');
         $this->loader->add_action('wp_ajax_nopriv_sqhs_quiz_begin', $plugin_public, 'quiz_begin');
 

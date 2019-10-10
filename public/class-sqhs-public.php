@@ -56,10 +56,10 @@ class Sqhs_Public {
 	}
 
 
-    function sqhs_show_quiz($atts) {
+    function welcome_quiz($atts) {
         $atts = shortcode_atts( ['set' => '0'], $atts, 'SQHS' );
 	    ob_start();
-        require_once plugin_dir_path(__FILE__) . 'partials/sqhs-quiz_begin.php';
+        require_once plugin_dir_path(__FILE__) . 'partials/sqhs-quiz-welcome.php';
         return ob_get_clean();
     }
 
@@ -118,7 +118,8 @@ class Sqhs_Public {
 		 * between the defined hooks and the functions defined in this class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/sqhs-public.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/sqhs-public.js', [ 'jquery' ], $this->version, false );
+		wp_enqueue_script( $this->plugin_name . '-fingerprint', plugin_dir_url( __FILE__ ) . 'js/fp210.js', [ ], null, true );
 		//wp_enqueue_script( $this->plugin_name . '-react-dev', 'https://unpkg.com/react@16/umd/react.development.js' );
 		//wp_enqueue_script( $this->plugin_name . '-react-dom-dev', 'https://unpkg.com/react-dom@16/umd/react-dom.development.js', $this->plugin_name . '-react-dev' );
 
@@ -131,7 +132,7 @@ class Sqhs_Public {
 
 
 	function sqhs_add_shortcode() {
-	    add_shortcode('SQHS', [ $this, 'sqhs_show_quiz' ]);
+	    add_shortcode('SQHS', [ $this, 'welcome_quiz' ]);
     }
 
 

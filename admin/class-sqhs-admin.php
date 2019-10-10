@@ -148,6 +148,7 @@ class Sqhs_Admin {
 
         if ( !isset($_REQUEST['action']) || !isset($_REQUEST['question']) )
             require_once plugin_dir_path(__FILE__) . 'partials/sqhs-questions-display.php';
+
     }
 
 

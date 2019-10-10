@@ -17,5 +17,6 @@
     <?php wp_nonce_field(); ?>
     <input type="hidden" name="action" value="sqhs_quiz_begin">
     <input type="hidden" name="set" value="<?php echo $atts['set']; ?>">
+    <input type="hidden" name="fingerprint" id="fingerprint" value="">
     <button type="submit">Go</button>
 </form>

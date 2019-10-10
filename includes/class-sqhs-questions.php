@@ -7,6 +7,7 @@ class Questions_List extends \WP_List_Table
     private $answers;       // array of Answers filled with answers for defined Question
     private $answers_block; // string contains html for output in sqhs-question-display.php
     private $answers_ids;   // string contains Answers ids for defined Question
+    private $request;
 
     function __construct($request) {
 
@@ -16,6 +17,7 @@ class Questions_List extends \WP_List_Table
             wp_die();
         }
         global $status, $page;
+        $this->request = $request;
 
         parent::__construct( array(
             'singular'=> 'Question', //Singular label
@@ -23,7 +25,7 @@ class Questions_List extends \WP_List_Table
             'ajax' => true //We won't support Ajax for this table
         ) );
 
-        $this->check_action($request);
+        $this->check_action();
 
     }
 
@@ -110,7 +112,7 @@ class Questions_List extends \WP_List_Table
 
 
     /**
-     * Loads Sets into $sets
+     * Loads question(s) into $questions
      *
      * @param array $params may contain [or 'text' or 'id']
      */
@@ -142,50 +144,39 @@ class Questions_List extends \WP_List_Table
     /**
      * @param $request it is the $_REQUEST
      */
-    private function check_action($request) {
-        if ( isset($request['action']) || isset($request['question']) ) {
+    private function check_action() {
+        if ( isset($this->request['action']) || isset($this->request['question']) ) {
 
             require_once plugin_dir_path(__FILE__) . 'class-sqhs-categories.php';
-            $catlist = new Categories_List($request);
 
             // Edit Question
-            if ( wp_verify_nonce($request['_wpnonce'], 'edit') && is_numeric($request['question']) ) {
-                $param['id'] = $request['question'];
+            if ( wp_verify_nonce($this->request['_wpnonce'], 'edit') && is_numeric($this->request['question']) ) {
 
-                $relationships = $this->get_relations($param['id']);
-                $relationships = array_column($relationships, 'category_id');
-
+                $param['id'] = $this->request['question'];
                 $this->get_data( $param );
-
-                $li = $catlist->get_categories_list($relationships);
-                $question = $this->questions[0];
-                $question['heading'] = 'Edit Question';
-                $question['subheading'] = 'Question';
                 $this->get_answers_list($param['id']);
 
-                $answers_block = $this->answers_block;
-                $answers_ids = $this->answers_ids;
-                require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-question-display.php';
+                $this->show_question($param['id']);
 
             }
 
 
-            if ( wp_verify_nonce($request['_wpnonce'], 'delete') ) {
+            if ( wp_verify_nonce($this->request['_wpnonce'], 'delete') ) {
                 /** @ToDo Complete Set Delete */
 
             }
 
             // Add new Set
-            if ( wp_verify_nonce($request['_wpnonce'], 'addnewquestion') ) {
+            if ( wp_verify_nonce($this->request['_wpnonce'], 'addnewquestion') ) {
 
-                require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-question-display.php';
+                $this->show_question();
 
             }
 
             // Save question
-            if ( wp_verify_nonce($request['_wpnonce'], 'savequestion') ) {
-
-                echo 'Save';
+            if ( wp_verify_nonce($this->request['_wpnonce'], 'savequestion') && $this->request['action'] == 'sqhs_questionsave') {
+                
+                $this->save_question();
 
             }
         }
@@ -243,6 +234,118 @@ class Questions_List extends \WP_List_Table
     }
 
 
-    
+    function show_question ($id = null) {
+        $catlist = new Categories_List($this->request);
+
+        if ( $id ) {
+            $relationships = $this->get_relations($id);
+            $relationships = array_column($relationships, 'category_id');
+            $question = $this->questions[0];
+        } else {
+            $relationships = null;
+        }
+
+        $li = $catlist->get_categories_list($relationships);
+        $question = $this->questions[0];
+        $question['heading'] = 'Edit Question';
+        $question['subheading'] = 'Question';
+
+        $answers_block = $this->answers_block;
+        $answers_ids = $this->answers_ids;
+        require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-question-display.php';
+    }
+
+
+    private function save_question () {
+        global $wpdb;
+        $notice = $question_id = $save = false;
+        $data = $format = [];
+        $values = '';
+        // Save Question
+        if ( isset($this->request['question-id']) && !empty($this->request['question-id']) )
+            if ( !is_numeric($this->request['question-id']) || $this->request['question-id'] < 1 ) {
+                $notice = '<strong>Not saved</strong>. Question id error ';
+            } else {
+                $question_id = $data ['id'] = (int)$this->request['question-id'];
+                $format[] = '%d';
+            }
+        if ( !isset($this->request['question-text']) || strlen($this->request['question-text']) < 2 || strlen($this->request['question-text']) > 250 )
+            $notice .= '<strong>Not saved</strong>. Question lengh error ';
+        else {
+            $data['text'] = $this->request['question-text'];
+            $format[] = '%s';
+        }
+        if ( isset($this->request['question-explanation']) && strlen($this->request['question-explanation']) > 250 )
+            $notice .= '<strong>Not saved</strong>. Question explanation lengh error ';
+        else {
+            $data['explanation'] = $this->request['question-explanation'];
+            $format[] = '%s';
+        }
+
+        // Saving question
+        if ( $notice )
+            echo '<div class="notice notice-error is-dismissible"><p>' . $notice . '</p></div>';
+        else
+            $save = $wpdb->replace( $wpdb->prefix . 'sqhs_questions', $data, $format );
+        if ( $save === false ) {
+            $notice = '<strong>Not saved</strong>. Question saving error at server ';
+        } else {
+            $question_id = $wpdb->insert_id;
+        }
+        
+
+        $data = false;
+        if ( !$notice && $question_id && $question_id > 0 ) {
+            // Save Answers
+            if ( !empty($this->request['answers_ids']) )
+                $data = explode( ",", $this->request['answers_ids'] );
+            if ( $data ) {
+                foreach ( $data as $i ) {
+                    if ( isset($this->request[('answer_text_' . $i)]) && iconv_strlen($this->request[('answer_text_' . $i)]) > 0 ) {
+                        $text = esc_sql( $this->request[('answer_text_' . $i)] );
+                        $text = ( iconv_strlen($text) > 49 ) ?  substr($text, 0, 49) : $text;
+                        $correct = ( isset($this->request[('answer_correct_' . $i)]) && ($this->request[("answer_correct_" . $i)] == "on" || $this->request[("answer_correct_" . $i)] == "1") ) ? 1 : 0;
+                        $values .= '(' . $question_id . ',"' . $text . '",' . $correct . '),';
+                    }
+                }
+                // Deleting all previous Answers
+                $wpdb->delete( $wpdb->prefix . 'sqhs_answers', ['question_id'=>$question_id], '%d' );
+                // Cut last comma and Insert Answers
+                if ( strlen($values) > 6 ) {
+                    $values = substr( $values, 0, (strlen($values) - 1) );
+                    $wpdb->query( 'INSERT INTO ' . $wpdb->prefix .'sqhs_answers (question_id,text,correct) VALUES ' . $values );
+                }
+
+            }
+
+            $values = '';
+            // Deleting all previous Relationships
+            $wpdb->delete( $wpdb->prefix . 'sqhs_relationships', ['question_id'=>$question_id, 'set_id'=>null], ['%d', '%d'] );
+            // Save Relationships
+            if ( isset($this->request['set_category']) && is_countable($this->request['set_category']) ) {
+                foreach ( $this->request['set_category'] as $i ) {
+                    if ( is_numeric($i) && $i > 0 ) {
+                        $values .= '(NULL,' . (int)$i . ',' . $question_id . '),';
+                    }
+                }
+                // Cut last comma and Insert Relationships
+                if ( strlen($values) > 8 ) {
+                    $values = substr( $values, 0, (strlen($values) - 1) );
+                    $wpdb->query( 'INSERT INTO ' . $wpdb->prefix .'sqhs_relationships (set_id,category_id,question_id) VALUES ' . $values );
+                }
+            }
+            $sqhs_questions = $this;
+            require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-questions-display.php';
+        } else {
+            $data = [];
+            $data['id'] = $question_id;
+            $this->get_data( $data );
+            $this->get_answers_list($question_id);
+
+            $this->show_question($question_id);
+        }
+
+    }
+
 
 }
