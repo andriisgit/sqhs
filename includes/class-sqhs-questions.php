@@ -269,13 +269,13 @@ class Questions_List extends \WP_List_Table
                 $question_id = $data ['id'] = (int)$this->request['question-id'];
                 $format[] = '%d';
             }
-        if ( !isset($this->request['question-text']) || strlen($this->request['question-text']) < 2 || strlen($this->request['question-text']) > 250 )
+        if ( !isset($this->request['question-text']) || strlen($this->request['question-text']) < 2 || mb_strlen($this->request['question-text']) > 250 )
             $notice .= '<strong>Not saved</strong>. Question lengh error ';
         else {
             $data['text'] = $this->request['question-text'];
             $format[] = '%s';
         }
-        if ( isset($this->request['question-explanation']) && strlen($this->request['question-explanation']) > 250 )
+        if ( isset($this->request['question-explanation']) && mb_strlen($this->request['question-explanation']) > 250 )
             $notice .= '<strong>Not saved</strong>. Question explanation lengh error ';
         else {
             $data['explanation'] = $this->request['question-explanation'];
@@ -301,9 +301,9 @@ class Questions_List extends \WP_List_Table
                 $data = explode( ",", $this->request['answers_ids'] );
             if ( $data ) {
                 foreach ( $data as $i ) {
-                    if ( isset($this->request[('answer_text_' . $i)]) && iconv_strlen($this->request[('answer_text_' . $i)]) > 0 ) {
+                    if ( isset($this->request[('answer_text_' . $i)]) && mb_strlen($this->request[('answer_text_' . $i)]) > 0 ) {
                         $text = esc_sql( $this->request[('answer_text_' . $i)] );
-                        $text = ( iconv_strlen($text) > 49 ) ?  substr($text, 0, 49) : $text;
+                        $text = ( mb_strlen($text) > 49 ) ?  substr($text, 0, 49) : $text;
                         $correct = ( isset($this->request[('answer_correct_' . $i)]) && ($this->request[("answer_correct_" . $i)] == "on" || $this->request[("answer_correct_" . $i)] == "1") ) ? 1 : 0;
                         $values .= '(' . $question_id . ',"' . $text . '",' . $correct . '),';
                     }

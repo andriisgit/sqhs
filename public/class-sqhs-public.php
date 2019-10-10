@@ -68,14 +68,59 @@ class Sqhs_Public {
 
         check_ajax_referer();
 
-        ob_start();
-        require_once plugin_dir_path(__FILE__) . 'partials/sqhs-quiz.php';
-        return ob_get_clean();
+        global $wpdb;
+	    $set_ids = $_REQUEST['set'];
+	    $fp = $_REQUEST['fingerprint'];
 
-        $response['result'] = 'Hey';
-        $response['message'] = 'MeYHEY';
-        echo json_encode($response);
-        wp_die();
+	    // check if last symbol in $set_ids is comma
+	    if ( substr( $set_ids, (strlen($set_ids)-1), 1 ) == ',' )
+	        $set_ids = substr( $set_ids, 0, (strlen($set_ids) - 1) );
+
+	    $set_arr = explode( ',', $set_ids );
+	    if ( empty($set_arr) || empty($fp) )
+		    wp_send_json( [ 'status'=>'ERR', 'message'=>'Not enough parameters for preparing a quiz' ], 412 );
+
+	    /** @todo Check for time out */
+	    /** @todo Check for unfinished quiz */
+	    /** @todo Make notifications */
+
+	    $set_full = $set_quiz = [];
+	    $sql = 'SELECT S.set_id, Q.question_id, N.max_question_quantity
+					FROM ' . $wpdb->prefix . 'sqhs_relationships Q 
+				    INNER JOIN ' . $wpdb->prefix . 'sqhs_relationships S ON S.category_id=Q.category_id
+				    LEFT JOIN ' . $wpdb->prefix . 'sqhs_sets N ON N.id=S.set_id
+				    WHERE S.set_id IN (' . $set_ids . ')
+				        AND S.question_id is NULL
+				        AND Q.set_id is NULL';
+	    $detail = $wpdb->get_results($sql);
+
+	    foreach ( $set_arr as $id ) {
+	    	// Fill array $set_full with all questions exist in database
+	    	foreach ($detail as $item) {
+			    if ( $id == $item->set_id ) {
+				    $set_full[ $id ][] = [
+					    'question_id'           => $item->question_id,
+					    'max_question_quantity' => $item->max_question_quantity
+				    ];
+			    }
+		    }
+			// Fill array $set_quiz with unique questions
+	    	$set_full_items = count($set_full[$id]) - 1;
+		    while ( count($set_quiz[$id]) < $set_full[$id][0]['max_question_quantity'] ) {
+			    $sql = $set_full[$id][rand(0, $set_full_items)]['question_id'];
+			    if ( !in_array($sql, $set_quiz[$id]) )
+			    	$set_quiz[$id][] = $sql;
+		    }
+	    }
+
+	    $wpdb->insert( $wpdb->prefix . 'sqhs_quiz', [
+		    'fingerprint' => $fp,
+		    'start_time' => time(),
+		    'questions_ids' => json_encode($set_quiz)
+		    ], ['%s', '%d', '%s'] );
+
+        wp_send_json( [ 'q'=>$set_quiz ], 200 );
+
 
     }
 

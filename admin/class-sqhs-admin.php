@@ -133,7 +133,7 @@ class Sqhs_Admin {
 
 
     public function admin_quizzes() {
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-quizzes.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-sets.php';
         $sqhs_sets = new Sets_List($_REQUEST);
 
 	    if ( !isset($_REQUEST['action']) || !isset($_REQUEST['set']) )
@@ -196,7 +196,7 @@ class Sqhs_Admin {
             $response['result'] = 'ERR';
             $response['message'] = 'Name can not be empty';
         }
-        if ( strlen($_REQUEST['set-name']) > 45 || (isset($_REQUEST['set-description']) && strlen($_REQUEST['set-description']) > 240) ) {
+        if ( mb_strlen($_REQUEST['set-name']) > 45 || (isset($_REQUEST['set-description']) && mb_strlen($_REQUEST['set-description']) > 240) ) {
             $response['result'] = 'ERR';
             $response['message'] = 'String is too long';
         }

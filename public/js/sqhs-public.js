@@ -30,9 +30,10 @@ jQuery(document).ready(function($) {
     }
 
 
-
+    /*
+     * Fingerprintjs (v2.10)
+     */
     var fpoptions = {excludes: {userAgent: true}};
-
     var fingerprintReport = function () {
         Fingerprint2.get(function (components) {
             var murmur = Fingerprint2.x64hash128(components.map(function (pair) { return pair.value }).join(), 31);
@@ -40,9 +41,7 @@ jQuery(document).ready(function($) {
             //jQuery("p.site-description").html(murmur)
         })
     };
-
-    var cancelId;
-    var cancelFunction;
+    var cancelId, cancelFunction;
 
     if (window.requestIdleCallback) {
         cancelId = requestIdleCallback(fingerprintReport);

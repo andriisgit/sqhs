@@ -142,7 +142,7 @@ class Categories_List extends \WP_List_Table
      */
     private function add_category($data) {
         // Check fields length
-        if ( strlen($data['name']) > 49 || strlen($data['description']) >250 ) {
+        if ( mb_strlen($data['name']) > 49 || mb_strlen($data['description']) >250 ) {
             echo '<div class="notice notice-warning is-dismissible"><p><strong>';
             _e( 'Category was not added.' );
             echo '</strong> ';
