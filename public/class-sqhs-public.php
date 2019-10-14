@@ -80,15 +80,14 @@ class Sqhs_Public {
 	    if ( empty($set_arr) || empty($fp) )
 		    wp_send_json( [ 'status'=>'ERR', 'message'=>'Not enough parameters for preparing a quiz' ], 412 );
 
-	    /** @todo Check for time out */
 	    /** @todo Check for unfinished quiz */
-	    /** @todo Make notifications */
+	    /** @todo Check for time out */
 
-	    $set_full = $set_quiz = [];
+	    $set_full = $set_quiz = $quiz_questions = [];
 	    $sql = 'SELECT S.set_id, Q.question_id, N.max_question_quantity
-					FROM ' . $wpdb->prefix . 'sqhs_relationships Q 
-				    INNER JOIN ' . $wpdb->prefix . 'sqhs_relationships S ON S.category_id=Q.category_id
-				    LEFT JOIN ' . $wpdb->prefix . 'sqhs_sets N ON N.id=S.set_id
+					FROM ' . $wpdb->prefix.'sqhs_relationships Q 
+				    INNER JOIN ' . $wpdb->prefix.'sqhs_relationships S ON S.category_id=Q.category_id
+				    LEFT JOIN ' . $wpdb->prefix.'sqhs_sets N ON N.id=S.set_id
 				    WHERE S.set_id IN (' . $set_ids . ')
 				        AND S.question_id is NULL
 				        AND Q.set_id is NULL';
@@ -108,21 +107,50 @@ class Sqhs_Public {
 	    	$set_full_items = count($set_full[$id]) - 1;
 		    while ( count($set_quiz[$id]) < $set_full[$id][0]['max_question_quantity'] ) {
 			    $sql = $set_full[$id][rand(0, $set_full_items)]['question_id'];
-			    if ( !in_array($sql, $set_quiz[$id]) )
-			    	$set_quiz[$id][] = $sql;
+			    if ( !in_array($sql, $set_quiz[$id]) ) {
+				    $set_quiz[$id][] = $sql;
+				    $quiz_questions[] = $sql;
+			    }
 		    }
 	    }
 
-	    $wpdb->insert( $wpdb->prefix . 'sqhs_quiz', [
+	    $start_time = time();
+	    // Save new Quiz into DB
+	    $wpdb->insert( $wpdb->prefix.'sqhs_quiz', [
 		    'fingerprint' => $fp,
-		    'start_time' => time(),
-		    'questions_ids' => json_encode($set_quiz)
+		    'start_time' => $start_time,
+		    'questions_ids' => json_encode($quiz_questions)
 		    ], ['%s', '%d', '%s'] );
+	    $quiz_id = $wpdb->insert_id;
 
-        wp_send_json( [ 'q'=>$set_quiz ], 200 );
+	    $sql = '';
+	    // Fill question's id to save to log
+	    foreach ($quiz_questions as $question) {
+	    	$sql .= '(' . $quiz_id . ',' . $question . ',' . $start_time . '),';
+	    	$start_time = "NULL";
+	    }
+	    $sql = substr( $sql, 0, (strlen($sql) - 1) );
+
+	    // Save empty log of answers
+	    $wpdb->query('INSERT INTO ' . $wpdb->prefix.'sqhs_log (quiz_id, question_id, start_time) VALUES ' . $sql);
+
+	    $question = [
+	    	'id' => $quiz_questions[0],
+	    	'number' => '1',
+		    'total' => count($quiz_questions),
+		    'text' => $this->get_question($quiz_questions[0])
+	    ];
+
+        wp_send_json( [ 'status'=>'OK', 'question'=>$question ], 201 );
 
 
     }
+
+
+	public function get_question($id) {
+		global $wpdb;
+		return $wpdb->get_var( 'SELECT text FROM ' . $wpdb->prefix.'sqhs_questions WHERE id=' . $id );
+	}
 
 	/**
 	 * Register the stylesheets for the public-facing side of the site.

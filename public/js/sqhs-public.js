@@ -11,9 +11,14 @@ jQuery(document).ready(function($) {
             type: "POST",
             url: wp_ajax.ajax_url,
             data: dataJSON,
+            beforeSend: function () {
+                $("form#sqhs_start button[type=submit]").html('...')
+            },
             success: function( response ){
-                //result = jQuery.parseJSON(response);
-                show_quiz();
+                if ( response.status == "OK" )
+                    show_question(response.question);
+                else
+                    $("#sqhs_center_body").html(response.message)
             },
             error: function( xhr, status, error ) {
                 console.log( 'Status: ' + xhr.status );
@@ -24,9 +29,10 @@ jQuery(document).ready(function($) {
     });
 
 
-    function show_quiz() {
-        console.log("QUIZ");
-        //document.getElementById("sqhs_header").innerHTML = "QUIZ";
+    function show_question(question) {
+        $("#sqhs_upper_note").html(question.number.toString() + " / " + question.total.toString());
+        $("#sqhs_center_body").html(question.text);
+        $("input[name=question]").val(question.id);
     }
 
 
@@ -38,7 +44,6 @@ jQuery(document).ready(function($) {
         Fingerprint2.get(function (components) {
             var murmur = Fingerprint2.x64hash128(components.map(function (pair) { return pair.value }).join(), 31);
             jQuery("#fingerprint").val(murmur);
-            //jQuery("p.site-description").html(murmur)
         })
     };
     var cancelId, cancelFunction;
@@ -50,7 +55,6 @@ jQuery(document).ready(function($) {
         cancelId = setTimeout(fingerprintReport, 1500);
         cancelFunction = clearTimeout
     }
-
 
 });
 
