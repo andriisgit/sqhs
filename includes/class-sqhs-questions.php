@@ -302,7 +302,7 @@ class Questions_List extends \WP_List_Table
             if ( $data ) {
                 foreach ( $data as $i ) {
                     if ( isset($this->request[('answer_text_' . $i)]) && mb_strlen($this->request[('answer_text_' . $i)]) > 0 ) {
-                        $text = esc_sql( $this->request[('answer_text_' . $i)] );
+                        $text = $this->request[('answer_text_' . $i)];
                         $text = ( mb_strlen($text) > 49 ) ?  substr($text, 0, 49) : $text;
                         $correct = ( isset($this->request[('answer_correct_' . $i)]) && ($this->request[("answer_correct_" . $i)] == "on" || $this->request[("answer_correct_" . $i)] == "1") ) ? 1 : 0;
                         $values .= '(' . $question_id . ',"' . $text . '",' . $correct . '),';
