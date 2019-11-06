@@ -30,17 +30,17 @@ jQuery(document).ready(function ($) {
                 $("form#sqhs_start button[type=submit]").html('...')
             },
             success: function (response) {
+                $("input[name='action']").val(response.action);
                 if (response.question) {
                     fill_upper(response.question.number.toString() + " / " + response.question.total.toString())
                     fill_center(response.question);
                     show_answers(response.answers, response.correct);
-                    $("input[name='action']").val(response.action);
                     $("input[name='set']").val(response.quiz)
                 }
                 if (response.anketa) {
                     fill_upper(response.anketa.header);
                     fill_anketa_body(response.anketa.body);
-                    sqhs_show_radio_bottom(response.anketa.question);
+                    sqhs_show_radio_bottom(response.anketa.question, response.anketa.button);
                 }
             },
             error: function (xhr, status, error) {
@@ -67,11 +67,12 @@ jQuery(document).ready(function ($) {
 
 
     function fill_anketa_body(body) {
-        $("#sqhs_center_body").html(body);
+        jQuery("#sqhs_center_body").html("");
+        $("#sqhs_center_body").append(body);
     }
 
 
-    function sqhs_show_radio_bottom(a) {
+    function sqhs_show_radio_bottom(a, b) {
         jQuery("#sqhs_bottom_button button[type='submit']").remove();
         jQuery("#sqhs_bottom_button input").remove();
         jQuery("#sqhs_bottom_button").html("");
@@ -79,9 +80,9 @@ jQuery(document).ready(function ($) {
         var html = "";
 
         for (var i = 0; i < a.length; i++) {
-            html = html + '<input type="radio" name="kurs" value="' + a[i].id + '">' + a[i].text + '<br/>';
+            html = html + '<input type="radio" name="sqhs_kurs" value="' + a[i].id + '">' + a[i].text + '<br/>';
         }
-        html = html + '<button type="submit">Результат тесту</button>';
+        html = html + '<button type="submit">' + b + '</button>';
         $("#sqhs_bottom_button").append(html);
     }
 

@@ -12,17 +12,16 @@
  * @subpackage Sqhs/public/partials
  */
 ?>
-<h1 id="sqhs_header">Welcome to Quiz Set No. <?php echo $atts['set']; ?></h1>
-<form id="sqhs_start">
+<style id="sqhs_custom_style"><?php echo $sqhs_custom_style ?></style>
 
-    <div id="sqhs_upper_note"></div>
+<div id="sqhs_upper_note_wrapper"><span id="sqhs_upper_note"></span></div>
+<form id="sqhs_start">
     <div id="sqhs_center_body"></div>
-    <div id="sqhs_bottom_button"><button type="submit">Go</button></div>
+    <div id="sqhs_bottom_button"><button type="submit">Розпочати!</button></div>
 
     <?php wp_nonce_field(); ?>
     <input type="hidden" name="question" value="">
     <input type="hidden" name="action" value="sqhs_quiz_begin">
-    <input type="hidden" name="set" value="<?php echo $atts['set']; ?>">
+    <input type="hidden" name="set" value="<?php echo $atts['set'] ?>">
     <input type="hidden" name="fingerprint" id="fingerprint" value="">
-
 </form>

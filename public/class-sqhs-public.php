@@ -62,6 +62,7 @@ class Sqhs_Public {
 
 	function welcome_quiz( $atts ) {
 		$atts = shortcode_atts( [ 'set' => '0' ], $atts, 'SQHS' );
+		$sqhs_custom_style = $this->get_custom_style();
 		ob_start();
 		require_once plugin_dir_path( __FILE__ ) . 'partials/sqhs-quiz-welcome.php';
 
@@ -181,6 +182,7 @@ class Sqhs_Public {
 		if ( ! $fp ) {
 			wp_send_json( 'Quiz identification error', 412 );
 		}
+
 		global $wpdb;
 
 		// Total questions in the quiz
@@ -236,14 +238,30 @@ class Sqhs_Public {
 			}
 			if ( $finish_questions > 0 && $finish_anketa == 0 && $finish_quiz == 0) {
 				// Quiz finished but anketa and priz don't showed
-				$this->send_anketa();
+				$email = (isset($_REQUEST['sqhs_email']) ? sanitize_email($_REQUEST['sqhs_email']) : null );
+				$kurs = (isset($_REQUEST['sqhs_kurs']) ? sanitize_key($_REQUEST['sqhs_kurs']) : null );
+				if ( ! $email || strlen($email) > 48 || ! $kurs || ! is_numeric($kurs) || $kurs < 1 ) {
+					$this->send_anketa();
+				} else {
+					$wpdb->update(
+						$wpdb->prefix . 'sqhs_quiz',
+						[ 'email' => $email, 'kurs' => $kurs ],
+						[ 'id' => $quiz_id, 'fingerprint' => $fp ],
+						[ '%s', '%d' ],
+						[ '%d', '%s' ]
+					);
+					//Show the final screen!
+					$this->send_final_screen();
+				}
+
+
 			}
 			if ( $finish_questions > 0 && $finish_anketa > 0 && $finish_quiz == 0) {
 				// Quiz finished, anketa saved but priz don't showed
+				$this->send_final_screen();
 			}
 
 		}
-
 
 		// Is the opened question exists
 		$sql = 'SELECT L.id, L.question_id, L.number, E.explanation FROM ' . $wpdb->prefix . 'sqhs_log L
@@ -275,10 +293,12 @@ class Sqhs_Public {
 				}
 			}
 			// Save result and fill end_time
-			$wpdb->update( $wpdb->prefix . 'sqhs_log', [
-				'end_time' => $time,
-				'result'   => $sql
-			], [ 'id' => $opened->id ], [ '%d', '%d' ], [ '%d' ] );
+			$wpdb->update( $wpdb->prefix . 'sqhs_log',
+				[ 'end_time' => $time, 'result'   => $sql ],
+				[ 'id' => $opened->id ],
+				[ '%d', '%d' ],
+				[ '%d' ]
+			);
 
 			if ( $opened->explanation && strlen( $opened->explanation ) > 0 ) {
 				// -> Prepare data for return explanation
@@ -344,10 +364,13 @@ class Sqhs_Public {
 	                AND L.end_time>1570000000
 	                AND L.result =1';
 				$sql = $wpdb->get_var( $sql ) / $total;
-				$wpdb->update( $wpdb->prefix . 'sqhs_quiz', [
-					'end_time' => $time,
-					'result'   => $sql
-				], [ 'id' => $quiz_id ], [ '%d', '%f' ], [ '%d' ] );
+				$wpdb->update(
+					$wpdb->prefix . 'sqhs_quiz',
+					[ 'end_time' => $time, 'result'   => $sql ],
+					[ 'id' => $quiz_id ],
+					[ '%d', '%f' ],
+					[ '%d' ]
+				);
 
 				$this->send_anketa();
 
@@ -365,17 +388,13 @@ class Sqhs_Public {
 	}
 
 
-	public function anketa_handler() {
-
-	}
-
 	/**
 	 * Send final anketa to frontend
 	 */
 	protected function send_anketa() {
 		$anketa = [
 			'header' => 'Один крок до подарунка!',
-			'body' => 'Введіть ваш email:<br/><input type="email"/><br/>На якому ви курсі?',
+			'body' => 'Введіть ваш email:<br/><input type="email" name="sqhs_email"/><br/><p>На якому ви курсі?</p>',
 			'question' => [ [ 'id' => '1', 'text' => '1'], [ 'id' => '2', 'text' => '2'], [ 'id' => '3', 'text' => '3'], [ 'id' => '4', 'text' => '4'], [ 'id' => '5', 'text' => '5'], [ 'id' => '100', 'text' => 'Закінчив'] ],
 			'button' => 'РЕЗУЛЬТАТ ТЕСТУ'
 		];
@@ -383,9 +402,22 @@ class Sqhs_Public {
 		wp_send_json( [
 			'quiz' => $this->quiz_id,
 			'anketa' => $anketa,
-			'action' => 'sqhs_anketa_handler'
+			'action' => 'sqhs_questions_controller'
 		], 200 );
 
+	}
+
+
+	protected function send_final_screen() {
+		$anketa = [
+			'header' => 'Ви набрали',
+			'body' => 'Покажіть цей результат менеджеру та отримайте свій подарунок!',
+		];
+		wp_send_json( [
+			'quiz' => $this->quiz_id,
+			'anketa' => $anketa,
+			'action' => ''
+		], 200 );
 	}
 
 
@@ -412,6 +444,7 @@ class Sqhs_Public {
 			$this->fp = $fp;
 		}
 	}
+
 
 	/**
 	 * @param int $quiz_id Quiz id
@@ -478,6 +511,33 @@ class Sqhs_Public {
 
 	}
 
+
+	public function get_custom_style() {
+		return '
+		.fullwidth-temp .container.post-wrap {
+		    margin: 0;
+            width: 100%;
+		}
+		
+		#sqhs_center_body {
+		    min-height: 200px;
+		    background-color: #d60b52;
+		}
+		#sqhs_bottom_button {
+		    min-height: 250px;
+		    background-color: #d60b52;		
+		}
+		#sqhs_upper_note_wrapper {
+		    min-height: 50px;
+		    background-color: #d60b52;
+		}
+		
+		sqhs_upper_note {
+		    line-height: 50px;
+		    color: white;
+		}';
+	}
+
 	/**
 	 * Register the JavaScript for the public-facing side of the site.
 	 *
@@ -497,7 +557,7 @@ class Sqhs_Public {
 		 */
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/sqhs-public.js', [ 'jquery' ], $this->version, false );
-		wp_enqueue_script( $this->plugin_name . '-fingerprint', plugin_dir_url( __FILE__ ) . 'js/fp210.js', [], null, true );
+		wp_enqueue_script( $this->plugin_name . '-fingerprint', plugin_dir_url( __FILE__ ) . 'js/fp210.js', [], null, false );
 		//wp_enqueue_script( $this->plugin_name . '-react-dev', 'https://unpkg.com/react@16/umd/react.development.js' );
 		//wp_enqueue_script( $this->plugin_name . '-react-dom-dev', 'https://unpkg.com/react-dom@16/umd/react-dom.development.js', $this->plugin_name . '-react-dev' );
 

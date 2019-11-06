@@ -178,9 +178,6 @@ class Sqhs {
 		$this->loader->add_action('wp_ajax_sqhs_questions_controller', $plugin_public, 'questions_controller');
 		$this->loader->add_action('wp_ajax_nopriv_sqhs_questions_controller', $plugin_public, 'questions_controller');
 
-		$this->loader->add_action('wp_ajax_sqhs_anketa_handler', $plugin_public, 'anketa_handler');
-		$this->loader->add_action('wp_ajax_nopriv_sqhs_anketa_handler', $plugin_public, 'anketa_handler');
-
 	}
 
 	/**
