@@ -1,6 +1,63 @@
 /**
- * All of the CSS for your admin-specific functionality should be
- * included in this file.
+ * All of the CSS for your admin-specific functionality should be included in this file.
  */
 
+
 a#add_answer, a.remove_answer { text-decoration: none }
+
+
+/*
+ * Accordion FAQ based on Pure CSS Accordion 2.0 (https://codepen.io/raubaca/pen/PZzpVe)
+ */
+input.sqhs-accordion {
+    position: absolute;
+    opacity: 0;
+    z-index: -1;
+}/*
+input.sqhs-accordion:checked + .sqhs-accotab-label {
+    background: #1a252f;
+}*/
+input.sqhs-accordion:checked + .sqhs-accotab-label::after {
+    transform: rotate(90deg);
+}
+input.sqhs-accordion:checked ~ .sqhs-accotab-content {
+    max-height: 100vh;
+    padding: 1em;
+}
+.sqhs-accotabs {
+    /*border-radius: 8px;*/
+    overflow: hidden;
+    /*box-shadow: 0 4px 4px -2px rgba(0, 0, 0, 0.5);*/
+}
+.sqhs-accotab {
+    width: 100%;
+    /*color: white;*/
+    overflow: hidden;
+}
+.sqhs-accotab-label {
+    display: flex;
+    justify-content: space-between;
+    padding: 1em;
+    /*background: #2c3e50;*/
+    font-weight: bold;
+    cursor: pointer;
+}/*
+.sqhs-accotab-label:hover {
+    background: #1a252f;
+}*/
+.sqhs-accotab-label::after {
+    content: "\276F";
+    width: 1em;
+    height: 1em;
+    text-align: center;
+    transition: all 0.35s;
+}
+.sqhs-accotab-content {
+    max-height: 0;
+    padding: 0 1em;
+    /*color: #2c3e50;
+    background: white;*/
+    transition: all 0.35s;
+}
+
+

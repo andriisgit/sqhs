@@ -7,10 +7,10 @@ jQuery(document).ready(function ($) {
         var dataJSON = jQuery(this).serialize();
 
         /*
-        * The response we are waiting to receive back:
+        * The response we are waiting for to receive back:
         *
-        * String action : binded action function name
-        * String set    : quiz id
+        * string action : binded action function name
+        * string set    : quiz id
         *
         * array question: [ id, number, total, text ]
         *
@@ -18,7 +18,7 @@ jQuery(document).ready(function ($) {
         *
         * array correct : empty - for question / [ id, 0/1 ]
         *
-         */
+        */
 
         $.ajax({
             cache: false,
@@ -31,15 +31,18 @@ jQuery(document).ready(function ($) {
             },
             success: function (response) {
                 $("input[name='action']").val(response.action);
+				if (response.mode) {
+					$("input[name='mode']").val(response.mode);
+				}
                 if (response.question) {
-                    fill_upper(response.question.number.toString() + " / " + response.question.total.toString())
-                    fill_center(response.question);
-                    show_answers(response.answers, response.correct);
+                    sqhs_fill_upper(response.question.number.toString() + " / " + response.question.total.toString())
+                    sqhs_fill_center(response.question);
+                    sqhs_show_answers(response.answers, response.correct);
                     $("input[name='set']").val(response.quiz)
                 }
                 if (response.anketa) {
-                    fill_upper(response.anketa.header);
-                    fill_anketa_body(response.anketa.body);
+                    sqhs_fill_upper(response.anketa.header);
+                    sqhs_fill_anketa_body(response.anketa.body);
                     sqhs_show_radio_bottom(response.anketa.question, response.anketa.button);
                 }
             },
@@ -56,38 +59,48 @@ jQuery(document).ready(function ($) {
     });
 
 
-    function fill_upper( text ) {
+    function sqhs_fill_upper( text ) {
         $("#sqhs_upper_note").html( text );
     }
 
-    function fill_center(body) {
+    function sqhs_fill_center(body) {
         $("#sqhs_center_body").html(body.text);
         $("input[name=question]").val(body.id)
     }
 
 
-    function fill_anketa_body(body) {
+    function sqhs_fill_anketa_body(body) {
         jQuery("#sqhs_center_body").html("");
         $("#sqhs_center_body").append(body);
     }
 
 
+	/**
+	* @param array a 
+	* @param string b Button label
+	*/
     function sqhs_show_radio_bottom(a, b) {
         jQuery("#sqhs_bottom_button button[type='submit']").remove();
         jQuery("#sqhs_bottom_button input").remove();
         jQuery("#sqhs_bottom_button").html("");
 
-        var html = "";
-
-        for (var i = 0; i < a.length; i++) {
-            html = html + '<input type="radio" name="sqhs_kurs" value="' + a[i].id + '">' + a[i].text + '<br/>';
-        }
-        html = html + '<button type="submit">' + b + '</button>';
-        $("#sqhs_bottom_button").append(html);
+		if (a) {
+			var html = "";
+			for (var i = 0; i < a.length; i++) {
+				html = html + '<input type="radio" name="sqhs_kurs" value="' + a[i].id + '" id="sqhs_kurs' + a[i].id + '"><label for="sqhs_kurs' + a[i].id + '">' + a[i].text + '</label><br/>';
+			}
+			html = html + '<button type="submit" class="sqhs_final">' + b + '</button>';
+			$("#sqhs_bottom_button").append(html);
+		}
     }
 
 
-    function show_answers(a, c) {
+    /**
+     *
+     * @param array a answers looks like [ [ id, text ] ...  ]
+     * @param array|emplty c empty - for question / [ id, 0/1 ]
+     */
+    function sqhs_show_answers(a, c) {
         // Remove previous
         jQuery("#sqhs_bottom_button button[type='submit']").remove();
         jQuery("#sqhs_bottom_button input").remove();
@@ -130,7 +143,7 @@ jQuery(document).ready(function ($) {
             } else {
                 correct = ""
             }
-            html = html + '<input type="checkbox" ' + correct + ' name="answer[]" value="' + a[i].id + '">' + a[i].text + '<br/>';
+            html = html + '<input type="checkbox" ' + correct + ' name="answer[]" value="' + a[i].id + '" id="answer' + a[i].id + '"><label for="answer' + a[i].id + '">' + a[i].text + '</label><br/>';
             /*html = document.createElement("input");
             html.type = "checkbox";
             html.name = "answer[]";
@@ -152,7 +165,7 @@ jQuery(document).ready(function ($) {
      * Fingerprintjs (v2.10)
      */
     var fpoptions = {excludes: {userAgent: true}};
-    var fingerprintReport = function () {
+    var sqhs_fingerprintReport = function () {
         Fingerprint2.get(function (components) {
             var murmur = Fingerprint2.x64hash128(components.map(function (pair) {
                 return pair.value
@@ -160,14 +173,14 @@ jQuery(document).ready(function ($) {
             jQuery("#fingerprint").val(murmur);
         })
     };
-    var cancelId, cancelFunction;
+    var sqhs_cancelId, sqhs_cancelFunction;
 
     if (window.requestIdleCallback) {
-        cancelId = requestIdleCallback(fingerprintReport);
-        cancelFunction = cancelIdleCallback
+        sqhs_cancelId = requestIdleCallback(sqhs_fingerprintReport);
+        sqhs_cancelFunction = cancelIdleCallback
     } else {
-        cancelId = setTimeout(fingerprintReport, 1500);
-        cancelFunction = clearTimeout
+        sqhs_cancelId = setTimeout(sqhs_fingerprintReport, 1500);
+        sqhs_cancelFunction = clearTimeout
     }
 
 });

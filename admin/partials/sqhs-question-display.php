@@ -1,6 +1,6 @@
 <?php
 /**
- * Provide a admin area view for the plugin
+ * Provide a admin area Question view for the SQHS plugin
  *
  * @since      1.0.0
  *

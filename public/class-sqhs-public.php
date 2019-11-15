@@ -62,7 +62,6 @@ class Sqhs_Public {
 
 	function welcome_quiz( $atts ) {
 		$atts = shortcode_atts( [ 'set' => '0' ], $atts, 'SQHS' );
-		$sqhs_custom_style = $this->get_custom_style();
 		ob_start();
 		require_once plugin_dir_path( __FILE__ ) . 'partials/sqhs-quiz-welcome.php';
 
@@ -79,6 +78,7 @@ class Sqhs_Public {
 
 		$this->set_fingerprint();
 		$fp = $this->fp;
+
 
 		// check if last symbol in $set_ids is comma
 		if ( substr( $set_ids, ( strlen( $set_ids ) - 1 ), 1 ) == ',' ) {
@@ -126,11 +126,16 @@ class Sqhs_Public {
 
 		$start_time = time();
 		// Save new Quiz into DB
-		$wpdb->insert( $wpdb->prefix . 'sqhs_quiz', [
-			'fingerprint' => $fp,
-			'start_time' => $start_time,
-			'questions_ids' => json_encode( $quiz_questions )
-		], [ '%s', '%d', '%s' ] );
+		$wpdb->insert(
+			$wpdb->prefix . 'sqhs_quiz',
+			[
+				'ip' => $_SERVER['REMOTE_ADDR'],
+				'fingerprint' => $fp,
+				'start_time' => $start_time,
+				'questions_ids' => json_encode( $quiz_questions )
+			],
+			[ '%s', '%s', '%d', '%s' ]
+		);
 		$quiz_id = $wpdb->insert_id;
 
 		$sql = '';
@@ -161,7 +166,8 @@ class Sqhs_Public {
 			'question' => $question,
 			'answers' => $answers,
 			'correct' => [],
-			'action' => 'sqhs_questions_controller'
+			'action' => 'sqhs_questions_controller',
+			'mode' => 'quiz'
 		], 201 );
 
 
@@ -202,7 +208,7 @@ class Sqhs_Public {
 					AND Q.start_time>1570000000 
 					AND Q.end_time >1570000000 
 					AND Q.result IS NOT NULL
-					AND Q.present IS NULL
+					AND Q.final IS NULL
 					AND Q.email IS NULL';
 			$finish_questions = $wpdb->get_var( $sql );
 			$sql = 'SELECT COUNT(L.quiz_id) FROM ' . $wpdb->prefix . 'sqhs_quiz Q 
@@ -215,7 +221,7 @@ class Sqhs_Public {
 					AND Q.start_time>1570000000 
 					AND Q.end_time >1570000000 
 					AND Q.result IS NOT NULL
-					AND Q.present IS NULL
+					AND Q.final IS NULL
 					AND Q.email IS NOT NULL';
 			$finish_anketa = $wpdb->get_var( $sql );
 			$sql = 'SELECT COUNT(L.quiz_id) FROM ' . $wpdb->prefix . 'sqhs_quiz Q 
@@ -228,7 +234,7 @@ class Sqhs_Public {
 					AND Q.start_time>1570000000 
 					AND Q.end_time >1570000000 
 					AND Q.result IS NOT NULL
-					AND Q.present IS NOT NULL
+					AND Q.final IS NOT NULL
 					AND Q.email IS NOT NULL';
 			$finish_quiz = $wpdb->get_var( $sql );
 
@@ -250,11 +256,12 @@ class Sqhs_Public {
 						[ '%s', '%d' ],
 						[ '%d', '%s' ]
 					);
+					require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-mailchimp.php';
+					\SQHS\Integration\Mailchimp::save('', $email);
+
 					//Show the final screen!
 					$this->send_final_screen();
 				}
-
-
 			}
 			if ( $finish_questions > 0 && $finish_anketa > 0 && $finish_quiz == 0) {
 				// Quiz finished, anketa saved but priz don't showed
@@ -341,18 +348,6 @@ class Sqhs_Public {
 			} else {
 
 				// No free questions in a quiz left. Save quiz.end_time, quiz.result
-				/*
-				$opened = [];
-				for ($i = 0; $i <= 2; $i++) {
-					$sql = 'SELECT COUNT(C.result) FROM ' . $wpdb->prefix . 'sqhs_quiz Q
-						  RIGHT JOIN ' . $wpdb->prefix . 'sqhs_log C ON C.quiz_id=Q.id AND C.result=' . $i . ' AND C.result IS NOT NULL
-						WHERE Q.id=' . $quiz_id . '
-						  AND Q.fingerprint="' . $fp . '"
-						  AND Q.start_time>1570000000 AND Q.end_time IS NULL AND Q.result IS NULL';
-					$opened[] = $wpdb->get_var( $sql );
-				}
-				list ( $answers_wrong, $answers_correct, $answers_skipped ) = $opened;
-				*/
 				$sql = 'SELECT COUNT(L.result) FROM ' . $wpdb->prefix . 'sqhs_log L
 	              RIGHT JOIN ' . $wpdb->prefix . 'sqhs_quiz Q ON Q.id=L.quiz_id
 	                AND Q.fingerprint = "' . $fp . '"
@@ -373,6 +368,7 @@ class Sqhs_Public {
 				);
 
 				$this->send_anketa();
+				wp_die();
 
 			}
 		}
@@ -382,7 +378,8 @@ class Sqhs_Public {
 			'question' => $question,
 			'answers' => $answers,
 			'correct' => $correct,
-			'action' => 'sqhs_questions_controller'
+			'action' => 'sqhs_questions_controller',
+			'mode' => ''
 		], 200 );
 
 	}
@@ -394,7 +391,7 @@ class Sqhs_Public {
 	protected function send_anketa() {
 		$anketa = [
 			'header' => 'Один крок до подарунка!',
-			'body' => 'Введіть ваш email:<br/><input type="email" name="sqhs_email"/><br/><p>На якому ви курсі?</p>',
+			'body' => 'Введіть ваш email:<br/><input type="email" name="sqhs_email"/><br/><br/><p>На якому ви курсі?</p>',
 			'question' => [ [ 'id' => '1', 'text' => '1'], [ 'id' => '2', 'text' => '2'], [ 'id' => '3', 'text' => '3'], [ 'id' => '4', 'text' => '4'], [ 'id' => '5', 'text' => '5'], [ 'id' => '100', 'text' => 'Закінчив'] ],
 			'button' => 'РЕЗУЛЬТАТ ТЕСТУ'
 		];
@@ -402,16 +399,43 @@ class Sqhs_Public {
 		wp_send_json( [
 			'quiz' => $this->quiz_id,
 			'anketa' => $anketa,
-			'action' => 'sqhs_questions_controller'
+			'action' => 'sqhs_questions_controller',
+			'mode' => 'anketa'
 		], 200 );
 
 	}
 
-
+	/**
+	 * Send the final screen to frontend
+	 */
 	protected function send_final_screen() {
+		global $wpdb;
+
+		// Get Quiz result
+		$sql = 'SELECT result, questions_ids FROM ' . $wpdb->prefix . 'sqhs_quiz WHERE start_time>1573000000 AND end_time>1573000000 AND email IS NOT NULL AND kurs IS NOT NULL AND result IS NOT NULL AND final IS NULL AND fingerprint="' . $this->fp . '" AND id=' . $this->quiz_id;
+		$quiz = $wpdb->get_row( $sql );
+		$n = count(json_decode($quiz->questions_ids)); // Total quiestions in the quiz
+		$b = floor( $quiz->result * $n ); // calculate right answers
+		$p = (int)($quiz->result * 100); // Percent value of result
+
+		// Depending on the result, load final
+		$sql = 'SELECT text_body, image_url FROM ' . $wpdb->prefix . 'sqhs_final 
+				WHERE active=1 AND range_from <= ' . $p .' AND range_to >=' . $p;
+		$final = $wpdb->get_row( $sql );
+		$img = ($final->image_url) ? ('<img src="' . esc_url_raw($final->image_url) . '"/>') : '';
+
+		// Close the Quiz
+		$wpdb->update(
+			$wpdb->prefix . 'sqhs_quiz',
+			[ 'final' => $b ],
+			[ 'id' => $this->quiz_id, 'fingerprint' => $this->fp ],
+			[ '%d' ],
+			[ '%d', '%s' ]
+			);
+
 		$anketa = [
-			'header' => 'Ви набрали',
-			'body' => 'Покажіть цей результат менеджеру та отримайте свій подарунок!',
+			'header' => 'Правильних відповідей',
+			'body' => '<h1 class="sqhs-right">' . $b . '</h1>' . $final->text_body . ' ' . $img,
 		];
 		wp_send_json( [
 			'quiz' => $this->quiz_id,
@@ -423,6 +447,7 @@ class Sqhs_Public {
 
 	/**
 	 * Set quiz id from request
+	 * @param int $id If the $id absent quiz id will be set from the request
 	 */
 	private function set_quiz_id() {
 		$quiz_id = ( isset( $_REQUEST['set'] ) ? sanitize_key( $_REQUEST['set'] ) : null );
@@ -511,32 +536,6 @@ class Sqhs_Public {
 
 	}
 
-
-	public function get_custom_style() {
-		return '
-		.fullwidth-temp .container.post-wrap {
-		    margin: 0;
-            width: 100%;
-		}
-		
-		#sqhs_center_body {
-		    min-height: 200px;
-		    background-color: #d60b52;
-		}
-		#sqhs_bottom_button {
-		    min-height: 250px;
-		    background-color: #d60b52;		
-		}
-		#sqhs_upper_note_wrapper {
-		    min-height: 50px;
-		    background-color: #d60b52;
-		}
-		
-		sqhs_upper_note {
-		    line-height: 50px;
-		    color: white;
-		}';
-	}
 
 	/**
 	 * Register the JavaScript for the public-facing side of the site.

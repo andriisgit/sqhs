@@ -12,7 +12,6 @@
  * @subpackage Sqhs/public/partials
  */
 ?>
-<style id="sqhs_custom_style"><?php echo $sqhs_custom_style ?></style>
 
 <div id="sqhs_upper_note_wrapper"><span id="sqhs_upper_note"></span></div>
 <form id="sqhs_start">
@@ -20,6 +19,7 @@
     <div id="sqhs_bottom_button"><button type="submit">Розпочати!</button></div>
 
     <?php wp_nonce_field(); ?>
+    <input type="hidden" name="mode" value="quiz">
     <input type="hidden" name="question" value="">
     <input type="hidden" name="action" value="sqhs_quiz_begin">
     <input type="hidden" name="set" value="<?php echo $atts['set'] ?>">

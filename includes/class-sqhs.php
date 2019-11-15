@@ -157,6 +157,10 @@ class Sqhs {
 		// Set the column width for Set list table
 		$this->loader->add_action( 'admin_head', $plugin_admin, 'admin_header' );
 
+		// Mailchimp
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-mailchimp.php';
+		$this->loader->add_action( 'admin_init', '\SQHS\Integration\Mailchimp','init_settings' );
+
 	}
 
 	/**

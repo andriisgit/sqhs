@@ -129,6 +129,31 @@ class Sqhs_Admin {
             'sqhs_admin_menu_categories',
             [ $this, 'admin_categories' ]
         );
+		add_submenu_page(
+			'sqhs_admin_quizzes',
+			$this->plugin_name . ' - Final Screen',
+			'Final Screen',
+			'manage_options',
+			'sqhs_admin_menu_final_screen',
+			[ $this, 'admin_final_screen' ]
+		);
+		add_submenu_page(
+			'sqhs_admin_quizzes',
+			$this->plugin_name . ' - FAQ',
+			'HowTo',
+			'manage_options',
+			'sqhs_admin_menu_faq',
+			[ $this, 'admin_faq' ]
+		);
+		add_submenu_page(
+			'sqhs_admin_quizzes',
+			$this->plugin_name . ' - Integration',
+			'Integraton',
+			'manage_options',
+			'sqhs-integration-mailchimp',
+			[ $this, 'admin_integration' ]
+		);
+
     }
 
 
@@ -158,7 +183,15 @@ class Sqhs_Admin {
 
         require_once plugin_dir_path(__FILE__) . 'partials/sqhs-cat-display.php';
 	}
-	
+
+	public function admin_faq() {
+		require_once plugin_dir_path(__FILE__) . 'partials/sqhs-faq.php';
+	}
+
+	public function admin_integration() {
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-mailchimp.php';
+		\SQHS\Integration\Mailchimp::settings_page();
+	}
 
     /**
      * Set the column width for Set list table
