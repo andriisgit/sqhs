@@ -3,7 +3,7 @@
  */
 
 
-a#add_answer, a.remove_answer { text-decoration: none }
+a#add_answer, a.remove_answer, a#sqhs_add_new_final_setting { text-decoration: none }
 
 
 /*

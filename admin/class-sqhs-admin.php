@@ -100,6 +100,11 @@ class Sqhs_Admin {
 
             wp_localize_script($this->plugin_name, 'wp_ajax', ['ajax_url' => admin_url('admin-ajax.php')]);
         }
+
+		// enqueue script for final settings in admin
+        if ( isset($_REQUEST['page']) && $_REQUEST['page'] == 'sqhs_admin_menu_final_screen' ) {
+	        wp_enqueue_script($this->plugin_name . 'admin-final', plugin_dir_url(__FILE__) . 'js/sqhs-admin-final.js', array('jquery'), $this->version, true);
+		}
 	}
 
 
@@ -176,6 +181,19 @@ class Sqhs_Admin {
 
     }
 
+	public function admin_final_screen() {
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-final.php';
+
+		if ( isset( $_REQUEST['submit'] ) ) {
+			//Save settings
+			\SQHS\Finalization::save_finalized_settings();
+		}
+
+		$fieldset = \SQHS\Finalization::get_finalized_data_html();
+
+		require_once plugin_dir_path(__FILE__) . 'partials/sqhs-final-display.php';
+
+	}
 
     public function admin_categories() {
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-categories.php';

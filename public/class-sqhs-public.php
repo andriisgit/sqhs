@@ -174,7 +174,7 @@ class Sqhs_Public {
 	}
 
 
-	public function questions_controller() {
+	public function questions_controller() : void {
 		check_ajax_referer();
 
 		$time = time();
@@ -329,6 +329,30 @@ class Sqhs_Public {
 					];
 					$correct  = [];
 					$answers  = $this->get_answers( $new_question->question_id );
+				} else {
+					// No free questions in a quiz left. Save quiz.end_time, quiz.result
+					$sql = 'SELECT COUNT(L.result) FROM ' . $wpdb->prefix . 'sqhs_log L
+	              RIGHT JOIN ' . $wpdb->prefix . 'sqhs_quiz Q ON Q.id=L.quiz_id
+	                AND Q.fingerprint = "' . $fp . '"
+	                AND Q.start_time>1570000000
+	                AND Q.end_time IS NULL
+	                AND Q.result IS NULL
+	              WHERE L.quiz_id = ' . $quiz_id . '
+	                AND L.start_time>1570000000
+	                AND L.end_time>1570000000
+	                AND L.result =1';
+					$sql = $wpdb->get_var( $sql ) / $total;
+					$wpdb->update(
+						$wpdb->prefix . 'sqhs_quiz',
+						[ 'end_time' => $time, 'result'   => $sql ],
+						[ 'id' => $quiz_id ],
+						[ '%d', '%f' ],
+						[ '%d' ]
+					);
+
+					$this->send_anketa();
+					wp_die();
+
 				}
 			}
 
@@ -415,13 +439,12 @@ class Sqhs_Public {
 		$sql = 'SELECT result, questions_ids FROM ' . $wpdb->prefix . 'sqhs_quiz WHERE start_time>1573000000 AND end_time>1573000000 AND email IS NOT NULL AND kurs IS NOT NULL AND result IS NOT NULL AND final IS NULL AND fingerprint="' . $this->fp . '" AND id=' . $this->quiz_id;
 		$quiz = $wpdb->get_row( $sql );
 		$n = count(json_decode($quiz->questions_ids)); // Total quiestions in the quiz
-		$b = floor( $quiz->result * $n ); // calculate right answers
+		$b = round( $quiz->result * $n ); // calculate right answers
 		$p = (int)($quiz->result * 100); // Percent value of result
 
 		// Depending on the result, load final
-		$sql = 'SELECT text_body, image_url FROM ' . $wpdb->prefix . 'sqhs_final 
-				WHERE active=1 AND range_from <= ' . $p .' AND range_to >=' . $p;
-		$final = $wpdb->get_row( $sql );
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-final.php';
+		$final = \SQHS\Finalization::get_finalized_data( $p );
 		$img = ($final->image_url) ? ('<img src="' . esc_url_raw($final->image_url) . '"/>') : '';
 
 		// Close the Quiz
