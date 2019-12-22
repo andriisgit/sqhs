@@ -17,7 +17,7 @@ class Sets_List extends \WP_List_Table
         parent::__construct( array(
             'singular'=> 'Set', //Singular label
             'plural' => 'Sets', //plural label, also this well be one of the table css class
-            'ajax' => true //We won't support Ajax for this table
+            'ajax' => true // support Ajax for this table
         ) );
 
         $this->check_action($request);
@@ -91,7 +91,7 @@ class Sets_List extends \WP_List_Table
         $del_url = wp_nonce_url( ('?page=' . $_REQUEST['page'] . '&action=delete&set=' . $item['id']), 'delete' );
         $actions = [
             'edit' => '<a href="' . $edit_url . '">' . _('Edit') . '</a>',
-            'delete' => '<a href="' . $del_url . '">' . _('Delete') . '</a>',
+            'delete' => '<a href="' . $del_url . '" name="sqhs-going-delete">' . _('Delete') . '</a>',
         ];
 
         return sprintf( '%1$s %2$s', $item['name'], $this->row_actions($actions) );
@@ -161,18 +161,17 @@ class Sets_List extends \WP_List_Table
             }
 
 
-            if ( wp_verify_nonce($request['_wpnonce'], 'delete') ) {
-                /** @ToDo Complete Set Delete */
-                echo 'Delete';
+            if ( wp_verify_nonce($request['_wpnonce'], 'delete') && isset($_REQUEST['set']) && is_numeric($_REQUEST['set']) ) {
+                // Confirmation shows through JS breakpoint
+	            $this->delete_set( sanitize_key( $_REQUEST['set'] ) );
+	            print('<script type="text/javascript">window.location.href="' . wp_get_referer() . '"</script>');
+	            exit;
             }
 
             // Add new Set
             if ( wp_verify_nonce($request['_wpnonce'], 'addnewset') ) {
-
                 $li = $catlist->get_categories_list();
-
                 require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/sqhs-set-display.php';
-
             }
 
         }
@@ -193,6 +192,21 @@ class Sets_List extends \WP_List_Table
         $sql = 'SELECT category_id FROM ' . $wpdb->prefix . 'sqhs_relationships ' . $where;
 
         return $wpdb->get_results($sql, ARRAY_A);
+    }
+
+	/**
+	 * @param int $id Id of set to be deleted
+	 */
+    private function delete_set($id) {
+    	global $wpdb;
+	    $wpdb->query( 'START TRANSACTION' );
+    	$T1 = $wpdb->delete( $wpdb->prefix . 'sqhs_sets', [ 'id' => $id ], '%d' );
+	    $T2 = $wpdb->delete( $wpdb->prefix . 'sqhs_relationships', [ 'set_id' => $id, 'question_id' => null ], [ '%d', '%d' ] );
+	    if ( $T1 === false || $T2 === false ) {
+		    $wpdb->query( 'ROLLBACK' );
+	    } else {
+		    $wpdb->query( 'COMMIT' );
+	    }
     }
 
 }

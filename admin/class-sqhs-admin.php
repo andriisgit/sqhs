@@ -186,7 +186,7 @@ class Sqhs_Admin {
 
 		if ( isset( $_REQUEST['submit'] ) ) {
 			//Save settings
-			\SQHS\Finalization::save_finalized_settings();
+			$notice = \SQHS\Finalization::save_finalized_settings();
 		}
 
 		$fieldset = \SQHS\Finalization::get_finalized_data_html();

@@ -1,9 +1,7 @@
 <?php
 
 /**
- * Provide a admin area view for the plugin
- *
- * This file is used to markup the admin-facing aspects of the plugin.
+ * Provide a admin area view of list of Questions Sets
  *
  * @link       biir.dk
  * @since      1.0.0

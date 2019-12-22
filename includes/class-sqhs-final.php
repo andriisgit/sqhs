@@ -54,7 +54,9 @@ class Finalization {
 		return $html;
 	}
 
-
+	/**
+	 * @return string|void Return message for notice
+	 */
 	public static function save_finalized_settings() {
 		if (
 			!check_admin_referer('sqhsfinalsetting') ||
@@ -91,8 +93,10 @@ class Finalization {
 			$r2 = $wpdb->query( 'INSERT INTO ' . $wpdb->prefix . 'sqhs_final (active,range_from,range_to,text_body,image_url) VALUES ' . $insert );
 			if ( $r1 === false || $r2 === false ) {
 				$wpdb->query( 'ROLLBACK' );
+				return 'Data not saved.';
 			} else {
 				$wpdb->query( 'COMMIT' );
+				return 'Data saved.';
 			}
 		}
 

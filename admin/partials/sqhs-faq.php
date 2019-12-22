@@ -27,7 +27,12 @@ $sqhs_faq = [
     [
         'How to stylish my quiz',
         'The simplest way to stylish your quiz is to create template under your theme folder and use this template for quiz page.'
+    ],
+    [
+        'How to delete a category',
+        'Due to safety reason category deletion was eliminated. You can unlink a Questions and a Sets from Category to stop using it.'
     ]
+
 ];
 $sqhs_faq_count = count( $sqhs_faq );
 

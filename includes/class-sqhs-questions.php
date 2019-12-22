@@ -92,7 +92,7 @@ class Questions_List extends \WP_List_Table
         $del_url = wp_nonce_url( ('?page=' . $_REQUEST['page'] . '&action=delete&question=' . $item['id']), 'delete' );
         $actions = [
             'edit' => '<a href="' . $edit_url . '">' . _('Edit') . '</a>',
-            'delete' => '<a href="' . $del_url . '">' . _('Delete') . '</a>',
+            'delete' => '<a href="' . $del_url . '" name="sqhs-going-delete">' . _('Delete') . '</a>',
         ];
 
         return sprintf( '%1$s %2$s', $item['text'], $this->row_actions($actions) );
@@ -161,8 +161,10 @@ class Questions_List extends \WP_List_Table
             }
 
 
-            if ( wp_verify_nonce($this->request['_wpnonce'], 'delete') ) {
-                /** @ToDo Complete Set Delete */
+            if ( wp_verify_nonce($this->request['_wpnonce'], 'delete') && isset($_REQUEST['question']) && is_numeric($_REQUEST['question']) ) {
+	            $this->delete_question( sanitize_key( $_REQUEST['question'] ) );
+	            print('<script type="text/javascript">window.location.href="' . wp_get_referer() . '"</script>');
+	            exit;
 
             }
 
@@ -347,5 +349,20 @@ class Questions_List extends \WP_List_Table
 
     }
 
+	/**
+	 * @param int $id
+	 */
+    private function delete_question($id) {
+	    global $wpdb;
+	    $wpdb->query( 'START TRANSACTION' );
+	    $T1 = $wpdb->delete( $wpdb->prefix . 'sqhs_relationships', [ 'question_id' => $id, 'set_id' => null ], [ '%d', '%d' ] );
+	    $T2 = $wpdb->delete( $wpdb->prefix . 'sqhs_answers', [ 'question_id' => $id ], '%d' );
+	    $T3 = $wpdb->delete( $wpdb->prefix . 'sqhs_questions', [ 'id' => $id ], '%d' );
+	    if ( $T1 === false || $T2 === false || $T3 === false ) {
+		    $wpdb->query( 'ROLLBACK' );
+	    } else {
+		    $wpdb->query( 'COMMIT' );
+	    }
+    }
 
 }

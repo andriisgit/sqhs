@@ -84,7 +84,7 @@ class Categories_List extends \WP_List_Table
         $del_url = wp_nonce_url( ('?page=' . $_REQUEST['page'] . '&action=delete&cat=' . $item['id']), 'delete' );
         $actions = [
             'edit' => '<a href="' . $edit_url . '">' . _('Edit') . '</a>',
-            'delete' => '<a href="' . $del_url . '">' . _('Delete') . '</a>',
+            //'delete' => '<a href="' . $del_url . '">' . _('Delete') . '</a>'
         ];
 
         return sprintf('%1$s %2$s', $item['name'], $this->row_actions($actions) );
@@ -188,8 +188,7 @@ class Categories_List extends \WP_List_Table
                 echo 'Edit';
             }
             if (wp_verify_nonce($request['_wpnonce'], 'delete')) {
-                /** @ToDo Complete Category Delete */
-                echo 'Delete';
+	            // Category DElete. Empty
             }
             // action = 'add category'
             if ( isset($request['_wpnonce']) && $request['action'] == 'add-cat' && wp_verify_nonce($request['_wpnonce'], 'add-cat') ) {

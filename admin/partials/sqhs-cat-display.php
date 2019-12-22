@@ -12,6 +12,7 @@
  * @subpackage Sqhs/admin/partials
  */
 ?>
+<div class="wrap">
 
 <h1>Categories</h1>
 
@@ -54,5 +55,7 @@
 
         </div>
     </div>
+
+</div>
 
 </div>

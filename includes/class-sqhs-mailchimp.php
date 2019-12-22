@@ -37,8 +37,8 @@ class Mailchimp {
 
 
 
-	private function validate_value( $input ) {
-		$output = esc_attr( $input );
+	public function validate_value( $input ) {
+	    $output = esc_attr( $input );
 		return apply_filters( 'validate_value', $output, $input );
 	}
 
@@ -49,7 +49,7 @@ class Mailchimp {
 
 		add_settings_section(
 			'sqhs-integration-mailchimp',
-			__( 'Sharing visitor\'s emails to Mailchimp', 'sqhs' ),
+			__( 'Sharing visitor\'s first name and email to Mailchimp', 'sqhs' ),
 			'',
 			'sqhs-integration-mailchimp'
 		);
@@ -63,7 +63,11 @@ class Mailchimp {
 			'sqhs-integration-mailchimp',
 			'sqhs-integration-mailchimp'
 		);
-		register_setting( 'sqhs-integration-mailchimp', 'sqhs_integration_mailchimp_api_key' );
+		register_setting( 'sqhs-integration-mailchimp', 'sqhs_integration_mailchimp_api_key', [
+			'type' => 'string',
+			'sanitize_callback' => [ (new Mailchimp), 'validate_value' ],
+			'show_in_rest' => false
+		] );
 
 		add_settings_field(
 			'sqhs_integration_mailchimp_list_id',
@@ -74,7 +78,11 @@ class Mailchimp {
 			'sqhs-integration-mailchimp',
 			'sqhs-integration-mailchimp'
 		);
-		register_setting( 'sqhs-integration-mailchimp', 'sqhs_integration_mailchimp_list_id', 'validate_value' );
+		register_setting( 'sqhs-integration-mailchimp', 'sqhs_integration_mailchimp_list_id', [
+			    'type' => 'string',
+			    'sanitize_callback' => [ (new Mailchimp), 'validate_value' ],
+			    'show_in_rest' => false
+            ] );
 	}
 
 

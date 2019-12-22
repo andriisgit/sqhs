@@ -1,6 +1,6 @@
 <?php
 /**
- * Provide a admin area view for the plugin
+ * Provide a admin area view of Edit Questions Set
  *
  * @since      1.0.0
  *
@@ -17,7 +17,7 @@
 
     <div id="col-container" class="wp-clearfix">
 
-        <form method="post" name="set-save">
+        <form method="post" name="sqhs-set-save">
 
         <input type="hidden" name="set-id" value="<?php echo isset($set['id']) ? $set['id'] : ''; ?>">
         <input type="hidden" name="action" value="sqhs_setsave">

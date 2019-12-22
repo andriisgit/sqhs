@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
 
-	jQuery("form[name='set-save']").submit(function (e) {
+	jQuery("form[name='sqhs-set-save']").submit(function (e) {
 
 		e.preventDefault();
 		var form_data = jQuery(this).serialize();
@@ -109,6 +109,13 @@ jQuery(document).ready(function($) {
 		let	divid = "div#answer_" + id.toString();
 		jQuery(divid).remove();
 	}
+
+
+	jQuery(".row-actions .delete a[name='sqhs-going-delete']").on('click', function (e) {
+		if( !confirm('Are you sure?') ) {
+			e.preventDefault();
+		}
+	});
 
 
 });
