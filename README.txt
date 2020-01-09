@@ -1,21 +1,22 @@
-=== Plugin Name ===
-Contributors: (this should be a list of wordpress.org userid's)
-Donate link: biir.dk
-Tags: comments, spam
-Requires at least: 3.0.1
-Tested up to: 3.4
-Stable tag: 4.3
+=== SQHS ===
+Contributors: web8moon
+Tags: Categorized quiz
+Requires at least: 4.7
+Tested up to: 4.9.13
+Stable tag: 1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Here is a short description of the plugin.  This should be no more than 150 characters.  No markup here.
+Simple quiz for HRs and students.
 
 == Description ==
 
-This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
+Simple quiz can be used by HRs, students, marketers, etc.
+You can to create a quizzes with afterquestion explain screen, and predefined afterquiz screens that includes
+contact form and presents depending on result.
+Quizzes and questions can be grouped into categories.
+For launching the quiz just put a shortcode like [SQHS Set=1,3,2]
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
 
 A few notes about the sections above:
 

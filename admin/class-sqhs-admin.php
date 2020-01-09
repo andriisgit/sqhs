@@ -105,6 +105,11 @@ class Sqhs_Admin {
         if ( isset($_REQUEST['page']) && $_REQUEST['page'] == 'sqhs_admin_menu_final_screen' ) {
 	        wp_enqueue_script($this->plugin_name . 'admin-final', plugin_dir_url(__FILE__) . 'js/sqhs-admin-final.js', array('jquery'), $this->version, true);
 		}
+
+		// enqueue script for report
+		if ( isset($_REQUEST['page']) && $_REQUEST['page'] == 'sqhs_admin_menu_report' ) {
+			wp_enqueue_script($this->plugin_name . 'admin-report', plugin_dir_url(__FILE__) . 'js/sqhs-admin-report.js', array('jquery'), $this->version, true);
+		}
 	}
 
 
@@ -149,6 +154,14 @@ class Sqhs_Admin {
 			'manage_options',
 			'sqhs_admin_menu_faq',
 			[ $this, 'admin_faq' ]
+		);
+		add_submenu_page(
+			'sqhs_admin_quizzes',
+			$this->plugin_name . ' - Report',
+			'Report',
+			'manage_options',
+			'sqhs_admin_menu_report',
+			[ $this, 'admin_report' ]
 		);
 		add_submenu_page(
 			'sqhs_admin_quizzes',
@@ -204,6 +217,13 @@ class Sqhs_Admin {
 
 	public function admin_faq() {
 		require_once plugin_dir_path(__FILE__) . 'partials/sqhs-faq.php';
+	}
+
+	public function admin_report() {
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-sqhs-report.php';
+		$sqhs_quizzes = new SQHS\Report($_REQUEST);
+
+		require_once plugin_dir_path(__FILE__) . 'partials/sqhs-report-display.php';
 	}
 
 	public function admin_integration() {
